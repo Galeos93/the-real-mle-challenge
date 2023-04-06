@@ -4,5 +4,8 @@ env-create:
 env-compile:
 	pip-compile requirements.in
 
+lint:
+	pylint mle_challenge
+
 test:
 	pytest tests
