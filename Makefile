@@ -11,7 +11,10 @@ test:
 	pytest tests
 
 build-bento:
-	bentoml build $(WHATEVER)
+	bentoml build -f ./mle_challenge/bento/bentofile.yaml mle_challenge/bento
 
 build-docker:
-	bentoml containerize $(CONTAINER_NAME)
+	bentoml containerize ${BENTO_TAG}
+
+run-docker:
+	docker run -e MODEL_VERSION=${MODEL_VERSION} -it --rm -p ${PORT}:${PORT} ${DOCKER_IMAGE} serve --production

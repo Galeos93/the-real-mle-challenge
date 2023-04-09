@@ -76,17 +76,23 @@ class PropertyFeatures(BaseModel):
     output=JSON(),
 )
 def classify(input_data: PropertyFeatures) -> Dict[str, Any]:
-    # TODO: logging
-    print(input_data)
-    input_df = pd.DataFrame([input_data.dict()])
+    with bentoml.monitor("iris_classifier_prediction") as mon:
+        input_df = pd.DataFrame([input_data.dict()])
 
-    id = input_df["id"].to_list()[0]
+        id = input_df["id"].to_list()[0]
 
-    input_df = input_df[
-        ["neighbourhood", "room_type", "accommodates", "bathrooms", "bedrooms"]
-    ]
-    input_df["neighbourhood"] = input_df["neighbourhood"].map(MAP_NEIGHB)
-    input_df["room_type"] = input_df["room_type"].map(MAP_ROOM_TYPE)
+        input_df = input_df[
+            [
+                "neighbourhood",
+                "room_type",
+                "accommodates",
+                "bathrooms",
+                "bedrooms"
+            ]
+        ]
+        input_df["neighbourhood"] = input_df["neighbourhood"].map(MAP_NEIGHB)
+        input_df["room_type"] = input_df["room_type"].map(MAP_ROOM_TYPE)
 
-    result = clf_runner.predict.run(input_df)[0]
+        result = clf_runner.predict.run(input_df)[0]
+        mon.log(result, name="pred", role="prediction", data_type="categorical")
     return {"id": id, "price_category": result}

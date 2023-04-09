@@ -11,18 +11,18 @@ import pytest
 @pytest.fixture()
 def valid_data():
     data = dict(
-        id=100,
-        accommodates=1,
-        room_type="Shared room",
-        beds=1,
-        bedrooms=1,
+        id=39331263,
+        accommodates=5,
+        room_type="Entire home/apt",
+        beds=2,
+        bedrooms=2,
         bathrooms=1,
-        neighbourhood="Bronx",
+        neighbourhood="Brooklyn",
         tv=True,
-        elevator=True,
-        internet=True,
-        latitude=1000,
-        longitude=-1000,
+        elevator=False,
+        internet=False,
+        latitude=40.65837,
+        longitude=-73.98402,
     )
     return data
 
@@ -62,7 +62,7 @@ def test_valid_input(bentoml_server, valid_data):
         data=json.dumps(valid_data),
     )
     assert response.status_code == 200
-    assert {"id": 100.0, "price_category": 0.0} == json.loads(response.text)
+    assert {"id": 39331263, "price_category": 2.0} == json.loads(response.text)
 
 
 @pytest.mark.skipif(
