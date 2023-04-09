@@ -1,9 +1,16 @@
+black
 pylint
 pytest
 
 aiobotocore[boto3]==2.4.2
+bentoml
+bentoml[io-json]
 dvc
 dvc[s3]
 luigi
 numpy
+matplotlib
 pandas
+pydantic
+seaborn
+scikit-learn

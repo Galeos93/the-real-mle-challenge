@@ -9,3 +9,9 @@ lint:
 
 test:
 	pytest tests
+
+build-bento:
+	bentoml build $(WHATEVER)
+
+build-docker:
+	bentoml containerize $(CONTAINER_NAME)

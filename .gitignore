@@ -108,3 +108,7 @@ saved/
 .vscode/
 .idea/
 __MACOSX/
+
+# data
+*.csv
+*.pkl
