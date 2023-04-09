@@ -7,6 +7,8 @@ import subprocess
 
 import pytest
 
+from mle_challenge.bento.service import PriceCategory
+
 
 @pytest.fixture()
 def valid_data():
@@ -56,13 +58,19 @@ def bentoml_server():
     reason="MODEL_VERSION env variable must be set",
 )
 def test_valid_input(bentoml_server, valid_data):
+    expected_output = {
+        "id": 39331263,
+        "price_category": PriceCategory.high.value
+    }
+
     response = requests.post(
         "http://0.0.0.0:3000/classify",
         headers={"content-type": "application/json"},
         data=json.dumps(valid_data),
     )
     assert response.status_code == 200
-    assert {"id": 39331263, "price_category": 2.0} == json.loads(response.text)
+
+    assert expected_output == json.loads(response.text)
 
 
 @pytest.mark.skipif(

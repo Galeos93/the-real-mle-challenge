@@ -7,7 +7,7 @@ from mle_challenge.bento import service
 
 @pytest.fixture()
 def mock_runner():
-    run_method_output = [{"id": id, "price_category": 0}]
+    run_method_output = [0]
 
     runner = mock.MagicMock()
     runner.predict.run = mock.MagicMock(return_value=run_method_output)

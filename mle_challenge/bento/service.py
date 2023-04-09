@@ -36,6 +36,13 @@ class NeighbourhoodType(str, Enum):
     manhattan = "Manhattan"
 
 
+class PriceCategory(Enum):
+    low = "Low"
+    mid = "Mid"
+    high = "High"
+    lux = "Lux"
+
+
 MAP_ROOM_TYPE = {
     RoomType.shared_room.value: 1,
     RoomType.private_room.value: 2,
@@ -50,6 +57,14 @@ MAP_NEIGHB = {
     NeighbourhoodType.staten_island.value: 3,
     NeighbourhoodType.brooklyn.value: 4,
     NeighbourhoodType.manhattan.value: 5,
+}
+
+
+MAP_PRICE_CATEGORY = {
+    0: PriceCategory.low.value,
+    1: PriceCategory.mid.value,
+    2: PriceCategory.high.value,
+    3: PriceCategory.lux.value,
 }
 
 
@@ -71,9 +86,17 @@ class PropertyFeatures(BaseModel):
         extra = Extra.forbid
 
 
+class PredictionModel(BaseModel):
+    id: StrictInt
+    price_category: PriceCategory
+
+    class Config:
+        extra = Extra.forbid
+
+
 @svc.api(
     input=JSON(pydantic_model=PropertyFeatures),
-    output=JSON(),
+    output=JSON(pydantic_model=PredictionModel),
 )
 def classify(input_data: PropertyFeatures) -> Dict[str, Any]:
     with bentoml.monitor("iris_classifier_prediction") as mon:
@@ -93,6 +116,7 @@ def classify(input_data: PropertyFeatures) -> Dict[str, Any]:
         input_df["neighbourhood"] = input_df["neighbourhood"].map(MAP_NEIGHB)
         input_df["room_type"] = input_df["room_type"].map(MAP_ROOM_TYPE)
 
-        result = clf_runner.predict.run(input_df)[0]
-        mon.log(result, name="pred", role="prediction", data_type="categorical")
+        pred = clf_runner.predict.run(input_df)[0]
+        mon.log(pred, name="pred", role="prediction", data_type="categorical")
+        result = MAP_PRICE_CATEGORY[pred]
     return {"id": id, "price_category": result}
