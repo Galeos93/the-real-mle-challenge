@@ -22,6 +22,7 @@ import pandas as pd
 import pickle
 
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 
 import mle_challenge
@@ -186,14 +187,34 @@ class RegisterModel(luigi.Task):
         with open(self.input()[0].path, "rb") as f_hdl:
             clf = pickle.load(f_hdl)
 
+        evaluation_df = pd.read_csv(self.input()[1].path)
+
+        # Compute metrics to save as metadata
+        y_test = evaluation_df["price_category"]
+        y_pred = evaluation_df["predicted_price_category"]
+        y_proba = evaluation_df[
+            ["price_category_prob_0",
+            "price_category_prob_1",
+            "price_category_prob_2",
+            "price_category_prob_3"
+            ]
+        ]
+
         model_name = f"{self.model_name}_{self.n_estimators}"
-        saved_model = bentoml.sklearn.save_model(model_name, clf)
+        saved_model = bentoml.sklearn.save_model(
+            model_name,
+            clf,
+            metadata={
+                "acc": accuracy_score(y_test, y_pred),
+                "auc": roc_auc_score(y_test, y_proba, multi_class="ovr")
+            },
+        )
         self.symlink_force(saved_model.path, self.output_path)
 
 
 class RunModelTrainEval(luigi.WrapperTask):
     def requires(self):
-        for n_estimators in range(100, 500, 50):
+        for n_estimators in range(100, 550, 50):
             yield EvaluateModel(
                 n_estimators=n_estimators,
                 model_name="simple_classifier",
