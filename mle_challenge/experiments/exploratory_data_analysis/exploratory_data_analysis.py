@@ -64,7 +64,7 @@ class PreprocessListingsData(luigi.Task):
     def output_path(self):
         return (
             "/home/agarcia/repos/the-real-mle-challenge"
-            "/data/processed/preprocessed_listings_2.csv"
+            "/data/processed/preprocessed_listings.csv"
         )
 
     def output(self):
