@@ -11,7 +11,7 @@ test:
 	if [ -z "$(MODEL_VERSION)" ]; then pytest tests; else MODEL_VERSION=$(MODEL_VERSION) pytest tests; fi
 
 build-bento:
-	bentoml build -f ./mle_challenge/bento/bentofile.yaml mle_challenge/bento
+	MODEL_VERSION=${MODEL_VERSION} bentoml build -f ./mle_challenge/bento/bentofile.yaml mle_challenge/bento
 
 build-docker:
 	bentoml containerize ${BENTO_TAG}

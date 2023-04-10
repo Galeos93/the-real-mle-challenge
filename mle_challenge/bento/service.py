@@ -36,7 +36,7 @@ class NeighbourhoodType(str, Enum):
     manhattan = "Manhattan"
 
 
-class PriceCategory(Enum):
+class PriceCategory(str, Enum):
     low = "Low"
     mid = "Mid"
     high = "High"

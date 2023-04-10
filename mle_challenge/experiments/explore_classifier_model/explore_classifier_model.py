@@ -111,7 +111,7 @@ class EvaluateModel(luigi.Task):
     def output_path(self):
         return (
             f"{MODELS_PATH}{self.model_name}_"
-            "{self.n_estimators}_evaluation.csv"
+            f"{self.n_estimators}_evaluation.csv"
         )
 
     def output(self):
@@ -169,7 +169,7 @@ class RegisterModel(luigi.Task):
     def output_path(self):
         return (
             f"{MODELS_PATH}registered_{self.model_name}_"
-            "{self.n_estimators}_link"
+            f"{self.n_estimators}_link"
         )
 
     def output(self):
