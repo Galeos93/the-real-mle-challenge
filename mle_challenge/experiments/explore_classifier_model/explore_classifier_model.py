@@ -14,6 +14,7 @@ RunModelTrainEval \
 """
 
 import os
+import typing
 
 import bentoml
 import luigi
@@ -54,6 +55,85 @@ def _data_preprocessing(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def training_pipeline(
+        data: pd.DataFrame,
+        n_estimators: int,
+        training_seed: int,
+        split_seed: int
+) -> typing.Any:
+    data = data.dropna(axis=0)
+    processed_data = _data_preprocessing(data)
+
+    feature_names = [
+        "neighbourhood",
+        "room_type",
+        "accommodates",
+        "bathrooms",
+        "bedrooms",
+    ]
+
+    X = processed_data[feature_names] # pylint: disable=invalid-name
+    y = processed_data["category"] # pylint: disable=invalid-name
+
+    X_train, _, y_train, _ = train_test_split(  # pylint: disable=invalid-name
+        X, y, test_size=0.15, random_state=split_seed
+    )
+
+    clf = RandomForestClassifier(
+        n_estimators=n_estimators,
+        random_state=training_seed,
+        class_weight="balanced",
+        n_jobs=4,
+    )
+    clf.fit(X_train, y_train)
+
+    return clf
+
+def evaluation_pipeline(
+        data: pd.DataFrame,
+        clf: typing.Any,
+        split_seed: int
+) -> pd.DataFrame:
+    data = data.dropna(axis=0)
+    processed_data = _data_preprocessing(data)
+
+    feature_names = [
+        "neighbourhood",
+        "room_type",
+        "accommodates",
+        "bathrooms",
+        "bedrooms",
+    ]
+
+    indexes = list(range(len(processed_data)))
+
+    X = processed_data[feature_names] # pylint: disable=invalid-name
+    y = processed_data["category"] # pylint: disable=invalid-name
+
+        # pylint: disable=invalid-name
+    _, X_test, _, y_test, _, indexes_test = train_test_split(
+        X, y, indexes, test_size=0.15, random_state=split_seed
+    )
+
+    y_pred = clf.predict(X_test)
+    y_proba = clf.predict_proba(X_test)
+
+    evaluation_df = pd.DataFrame(
+        {
+            "id": processed_data["id"].iloc[indexes_test],
+            "price_category": y_test,
+            "predicted_price_category": y_pred,
+        }
+    )
+
+    price_category_cols = [
+        f"price_category_prob_{x}" for x in range(y_proba.shape[1])
+    ]
+    evaluation_df[price_category_cols] = y_proba
+
+    return evaluation_df
+
+
 @requires(exploratory_data_analysis.PreprocessListingsData)
 class TrainRandomForestClassifier(luigi.Task):
     """Pipeline task to train and validate a RandomForestClassifier."""
@@ -71,31 +151,13 @@ class TrainRandomForestClassifier(luigi.Task):
 
     def run(self):
         preprocessed_listing = pd.read_csv(self.input().path)
-        preprocessed_listing = preprocessed_listing.dropna(axis=0)
-        preprocessed_listing = _data_preprocessing(preprocessed_listing)
 
-        feature_names = [
-            "neighbourhood",
-            "room_type",
-            "accommodates",
-            "bathrooms",
-            "bedrooms",
-        ]
-
-        X = preprocessed_listing[feature_names] # pylint: disable=invalid-name
-        y = preprocessed_listing["category"] # pylint: disable=invalid-name
-
-        X_train, _, y_train, _ = train_test_split(  # pylint: disable=invalid-name
-            X, y, test_size=0.15, random_state=self.split_seed
+        clf = training_pipeline(
+            preprocessed_listing,
+            self.n_estimators,
+            self.training_seed,
+            self.split_seed
         )
-
-        clf = RandomForestClassifier(
-            n_estimators=self.n_estimators,
-            random_state=self.training_seed,
-            class_weight="balanced",
-            n_jobs=4,
-        )
-        clf.fit(X_train, y_train)
 
         with open(self.output_path, "wb") as f_hdl:
             pickle.dump(clf, f_hdl)
@@ -122,42 +184,10 @@ class EvaluateModel(luigi.Task):
             clf = pickle.load(f_hdl)
 
         preprocessed_listing = pd.read_csv(self.input()[1].path)
-        preprocessed_listing = preprocessed_listing.dropna(axis=0)
-        preprocessed_listing = _data_preprocessing(preprocessed_listing)
 
-        feature_names = [
-            "neighbourhood",
-            "room_type",
-            "accommodates",
-            "bathrooms",
-            "bedrooms",
-        ]
-
-        indexes = list(range(len(preprocessed_listing)))
-
-        X = preprocessed_listing[feature_names] # pylint: disable=invalid-name
-        y = preprocessed_listing["category"] # pylint: disable=invalid-name
-
-         # pylint: disable=invalid-name
-        _, X_test, _, y_test, _, indexes_test = train_test_split(
-            X, y, indexes, test_size=0.15, random_state=self.split_seed
+        evaluation_df = evaluation_pipeline(
+            preprocessed_listing, clf, self.split_seed
         )
-
-        y_pred = clf.predict(X_test)
-        y_proba = clf.predict_proba(X_test)
-
-        evaluation_df = pd.DataFrame(
-            {
-                "id": preprocessed_listing["id"].iloc[indexes_test],
-                "price_category": y_test,
-                "predicted_price_category": y_pred,
-            }
-        )
-
-        price_category_cols = [
-            f"price_category_prob_{x}" for x in range(y_proba.shape[1])
-        ]
-        evaluation_df[price_category_cols] = y_proba
 
         evaluation_df.to_csv(self.output_path, index=False)
 
