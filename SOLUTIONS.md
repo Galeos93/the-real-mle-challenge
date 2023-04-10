@@ -23,13 +23,42 @@ All the code follows the `Continuous Integration` practice. Every commit pushed 
 linting check and testing using GitHub Actions (see `.github/workflows/ci_cd.yaml`).
 The developers must execute `make lint` and `make test` commands before pushing to master.
 
+# Project structure
+
+The project structure is the following:
+
+```
+.
+├── data
+│   ├── processed
+│   └── raw
+├── docs
+├── mle_challenge
+│   ├── bento
+│   ├── experiments
+│   │   ├── exploratory_data_analysis
+│   │   └── explore_classifier_model
+│   └── notebooks
+├── models
+└── tests
+    ├── bento
+    └── experiments
+```
+
+The folder `mle_challenge` contains the experiments that give birth to new data
+or models on the `data` and `models` folders, respectively.
+It also contains a `bento` folder that is needed for model deployment. Last but not
+least, a `notebook` folder is present, where the original notebooks from the challenge and
+a new one are stored.
+
 # Challenge 1 - Refactor DEV code
 
 ## Usage
 
-To make the experimentation pipeline, I have used `luigi`. To execute a pipeline that
-preprocesses the raw data, trains a series of models, evaluates them and sets a candidate on
-a Model Registry, you simply have to execute the following command:
+To make the experimentation pipeline, I have used [`luigi`](https://github.com/spotify/luigi).
+To execute a pipeline that preprocesses the raw data, trains a series of models,
+evaluates them and sets a candidate on a Model Registry, you simply have to execute
+the following command:
 
 ```bash
 PYTHONPATH=. luigi --module mle_challenge.experiments.explore_classifier_model.explore_classifier_model RunModelTrainEval --local-scheduler
@@ -45,10 +74,13 @@ bentoml models list
 Concretely, you will see a model with a tag like this: `simple_classifier_500:<hash>`.
 Save the tag, since you will use it later.
 
+The data scientist can make use of `mle_challenge/notebooks/03-evaluate-models.ipynb`
+notebook to explore the performance of the various trained models.
+
 ## Discussion
 
 When a data scientist creates an experiment that is composed of many phases
-(data processing, model training), it can be challenging to replicate it,
+(data processing, model training, etc), it can be challenging to replicate it,
 especially if the experiment was done long ago. Moreover, the usage of Jupyter
 Notebooks, where the code is often untested can make things even more complicated.
 
@@ -60,8 +92,11 @@ what stages and parameters created them.
 - Replicability: any user could launch an experiment and replicate the results obtained by another user.
 - Maintainability: some pipeline stages (e.g., data filtering) can be used across different experiments.
 Moreover, all the pieces can be tested.
-- Readability: structuring the experiment on different stages helps on its understanding.
+- Readability: structuring the experiment on different stages helps in its understanding.
 Moreover, `luigi` allows the creation of graphs to observe how the different stages are connected.
+
+Jupyter Notebooks are well-suited for reporting the accuracy of the trained models.
+This is why the notebook `03-evaluate-models.ipynb` was created.
 
 Once a model is trained, it can be saved on a Model registry. Having a Model Registry
 allows us to have all models versioned and in a centralized place. For the Model Registry,
@@ -166,5 +201,6 @@ print(response.text)
 
 For the Docker creation, `BentoML` framework was used.
 Creating a docker from a bento is extremely simple, especially for data scientists,
-which may have never used tools such as `Docker` before.
+which may have never used tools such as `Docker` before. It also offers special features
+such as model monitoring and horizontal scaling.
 
