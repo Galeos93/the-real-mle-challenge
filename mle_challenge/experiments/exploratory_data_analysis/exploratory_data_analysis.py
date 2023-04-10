@@ -1,12 +1,18 @@
 """Experiment where listings data from Airbnb is preprocessed."""
 
+import os
+
 import luigi
 from luigi.util import requires
 import pandas as pd
 
+import mle_challenge
 from mle_challenge.experiments.exploratory_data_analysis import (
     feature_engineering
 )
+
+
+DATA_PATH = f"{os.path.dirname(mle_challenge.__file__)}/../data/"
 
 
 def preprocess_listings(df: pd.DataFrame) -> pd.DataFrame:
@@ -50,7 +56,7 @@ class ListingsData(luigi.ExternalTask):
     @property
     def output_path(self):
         return (
-            "/home/agarcia/repos/the-real-mle-challenge/data/raw/listings.csv"
+            f"{DATA_PATH}raw/listings.csv"
         )
 
     def output(self):
@@ -63,8 +69,7 @@ class PreprocessListingsData(luigi.Task):
     @property
     def output_path(self):
         return (
-            "/home/agarcia/repos/the-real-mle-challenge"
-            "/data/processed/preprocessed_listings.csv"
+            f"{DATA_PATH}processed/preprocessed_listings.csv"
         )
 
     def output(self):
