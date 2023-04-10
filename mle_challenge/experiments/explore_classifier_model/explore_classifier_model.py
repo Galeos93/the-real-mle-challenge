@@ -50,8 +50,8 @@ MAP_NEIGHB = {
 
 
 def _data_preprocessing(df: pd.DataFrame) -> pd.DataFrame:
-    df["neighbourhood"] = df["neighbourhood"].map(MAP_NEIGHB)
-    df["room_type"] = df["room_type"].map(MAP_ROOM_TYPE)
+    df.loc[:, "neighbourhood"] = df["neighbourhood"].map(MAP_NEIGHB)
+    df.loc[:, "room_type"] = df["room_type"].map(MAP_ROOM_TYPE)
     return df
 
 
