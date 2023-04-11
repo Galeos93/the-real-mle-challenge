@@ -203,4 +203,3 @@ For the Docker creation, `BentoML` framework was used.
 Creating a docker from a bento is extremely simple, especially for data scientists,
 which may have never used tools such as `Docker` before. It also offers special features
 such as model monitoring and horizontal scaling.
-
